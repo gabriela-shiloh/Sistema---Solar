@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Solar</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div id="info"></div>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // Criar cena
+        const scene = new THREE.Scene();
+
+        const aspectRatio = window.innerWidth / window.innerHeight;
+
+        // Criar câmera
+        const zoom = 45;
+        const camera = new THREE.OrthographicCamera(-zoom*aspectRatio, zoom*aspectRatio, zoom, -zoom, -10000, 10000);
+        camera.position.set(0,30,100);
+        camera.lookAt(0,0,0);
+
+        // Criar renderizador
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+
+        // Função para criar uma esfera em um ponto aleatório a uma certa distância da origem
+        function criarEsfera(raio, caminhoTextura, distancia, yEsfera = 0) {
+            // Carregar textura
+            const textureLoader = new THREE.TextureLoader();
+            const textura = textureLoader.load(caminhoTextura);
+
+            // Criar geometria da esfera e aplicar a textura
+            const geometry = new THREE.SphereGeometry(raio, 32, 32);
+            const material = new THREE.MeshBasicMaterial({
+                map:textura
+            });
+
+            // Criar o mesh da esfera
+            const esfera = new THREE.Mesh(geometry, material);
+
+            // Gerar um número aleatório entre 0 e 2*pi
+            let phi = 2*Math.PI*Math.random();
+
+            // Colocar a esfera em um ponto na distância informada e que faça um ângulo aleatório com o eixo x
+            esfera.position.set(distancia*Math.cos(phi), yEsfera, distancia*Math.sin(phi));
+
+            scene.add(esfera);
+            return esfera;
+        }
+
+        //Função para criar os anéis de Saturno
+        function criarAneis() {
+            // Carregar textura
+            const textureLoader = new THREE.TextureLoader();
+            const textura = textureLoader.load("texturas/aneis_saturno_textura.png");
+        
+            // Criar geometria do plano e aplicar a textura
+            const geometry = new THREE.PlaneGeometry(8, 8);
+            const material = new THREE.MeshBasicMaterial({
+                map:textura,
+                side:THREE.DoubleSide,
+                transparent:true
+            });
+
+            // Criar o mesh do plano
+            const aneis = new THREE.Mesh(geometry, material);
+            
+            // Aplicar rotação no eixo x para o plano ficar no plano xz
+            aneis.rotation.x = Math.PI / 2;
+
+            return aneis;
+        }
+
+        // Função para criar a trajetória da órbita dos planetas ao redor do Sol
+        function criarTrajetoria(raio) {
+            // Criar curva elíptica
+            const curva = new THREE.EllipseCurve(0, 0, raio, raio, 0, 2 * Math.PI, false, 0);
+
+            // Obter os pontos da curva como Vector2
+            const points2D = curva.getPoints(200);
+
+            // Converter para Vector3 para uso em BufferGeometry
+            const points3D = points2D.map(p => new THREE.Vector3(p.x, p.y, 0));
+
+            // Criar a geometria e o material
+            const geometry = new THREE.BufferGeometry().setFromPoints(points3D);
+            const material = new THREE.LineBasicMaterial({ color: 0xffffff });
+
+            // Criar a curva
+            const trajetoria = new THREE.Line(geometry, material);
+
+            // Girar a tragetória no eixo x para ficar no plano xz
+            trajetoria.rotation.x = Math.PI/2
+
+            scene.add(trajetoria);
+        }
+        
+        // Função para criar a skybox de Via Láctea
+        function criarSkybox() {
+            // Carregar textura
+            const textureLoader = new THREE.TextureLoader();
+            const textura = textureLoader.load("texturas/skybox_textura.jpg");
+
+            // Criar geometria e aplicar a textura
+            const geometry = new THREE.SphereGeometry(128, 32, 32);
+            const material = new THREE.MeshBasicMaterial({ 
+                map:textura,
+                side:THREE.BackSide
+            });
+            
+            //Criar o mesh
+            const skybox = new THREE.Mesh(geometry, material);
+
+            scene.add(skybox);
+            return skybox;
+        }
+
+        //Função para atualizar as informações mostradas na tela
+        function atualizarInfo() {
+            const infoElemento = document.getElementById("info");
+
+            if(selecionado == 0) {
+                infoElemento.innerHTML = `
+                Pressione 'W' e 'S' para mudar a velocidade<br>
+                Pressione 'A' e 'D' para mudar seleção<br>
+                Pressione 'R' para resetar todas as velocidades<br>
+                Selecionado: Sistema Solar
+                `;
+            } else {
+                infoElemento.innerHTML = `
+                Pressione 'W' e 'S' para mudar a velocidade<br>
+                Pressione 'A' e 'D' para mudar seleção<br>
+                Pressione 'R' para resetar todas as velocidades<br>
+                Selecionado: ${planetas[selecionado-1].nome}
+                `;
+            }
+        }
+
+        // Interações do usuário
+        document.addEventListener('keydown', (event) => {
+            // Alterar o que está selecionado para mudar a velocidade
+            if (event.key.toLowerCase() === 'd') {
+                if(selecionado < planetas.length) {
+                    selecionado++;
+                } else {
+                    selecionado = 0;
+                }
+
+                atualizarInfo()
+            }
+            if (event.key.toLowerCase() === 'a') {
+                if(selecionado > 0) {
+                    selecionado--;
+                } else {
+                    selecionado = 8;
+                }
+
+                atualizarInfo()
+            }
+
+            // Alterar a velocidade do que estiver selecionado
+            if (event.key.toLowerCase() === 'w') {
+                if(selecionado == 0) {
+                    velTempo += 0.05
+                } else {
+                    planetas[selecionado-1].coefVel += 0.05;
+                } 
+            }
+            if (event.key.toLowerCase() === 's') {
+                if(selecionado == 0) {
+                    velTempo -= 0.05
+                } else {
+                    planetas[selecionado-1].coefVel -= 0.05;
+                } 
+            }
+
+            // Resetar todas as velocidades
+            if (event.key.toLowerCase() === 'r') {
+                velTempo = 1;
+                for(let i = 0; i < 8; i++) { planetas[i].coefVel = 1 } 
+            }
+        });
+
+
+        class CorpoCeleste {
+            constructor(nome, raio, caminhoTextura, raioTranslacao, velOrbita, altura = 0, planetaOrbita = null) {
+                this.nome = nome;
+                this.mesh = criarEsfera(raio, caminhoTextura, raioTranslacao, altura);
+                this.raioTranslacao = raioTranslacao;
+                this.velOrbita = velOrbita;
+                this.coefVel = 1;   // Usado para alterar a velocidade de cada planeta individualmente
+
+                // Gerar o ponto que será orbitado pelo corpo celeste, também utilizado para que os corpos
+                // celestes possam ter velocidades distintas
+                this.pivo = new THREE.Group();
+                this.pivo.add(this.mesh);
+                scene.add(this.pivo);
+
+                // Caso seja um satélite natural, seu ponto de rotação será seu planeta
+                if(planetaOrbita != null) { planetaOrbita.mesh.add(this.pivo); }
+            }
+
+            rotacao() {
+                // Fazer o corpo celeste girar em torno de si mesmo
+                this.mesh.rotation.y += 0.02*this.coefVel*velTempo;
+            }
+
+            translacao() {
+                // Fazer o corpo celeste girar em torno de seu pivo
+                this.pivo.rotation.y += (this.velOrbita*this.coefVel*velTempo)/1000;
+            }
+        }
+
+        let velTempo = 1;       // Coeficiente que multiplica a velocidade de rotação e translação de todos os corpos celestes
+        let selecionado = 0;    // Indica o que está selecionado para alterar a velocidade
+
+        // Criar o Sol
+        const sol = new CorpoCeleste("Sol", 10, "texturas/sol_textura.jpg", 0, 0);
+
+        // Criar os planetas
+        const planetas = [
+            new CorpoCeleste("Mercúrio", 0.28, "texturas/mercurio_textura.jpg", 20, 4.7),
+            new CorpoCeleste("Vênus", 0.696, "texturas/venus_textura.jpg", 30, 3.5),
+            new CorpoCeleste("Terra", 0.728, "texturas/terra_textura.jpg", 40, 2.9),
+            new CorpoCeleste("Marte", 0.384, "texturas/marte_textura.jpg", 50, 2.4),
+            new CorpoCeleste("Júpiter", 2, "texturas/jupiter_textura.jpg", 60, 1.3),
+            new CorpoCeleste("Saturno", 1.674, "texturas/saturno_textura.jpg", 70, 0.9),
+            new CorpoCeleste("Urano", 1.092, "texturas/urano_textura.jpg", 80, 0.6),
+            new CorpoCeleste("Netuno", 1.062, "texturas/netuno_textura.jpg", 90, 0.5)
+        ];
+        
+        // Adicionar os aneis de Saturno
+        planetas[5].mesh.add(criarAneis()); 
+
+        //Criar os satélites naturais
+        const satelitesNaturais = [
+            new CorpoCeleste("Lua", 0.192, "texturas/lua_textura.jpg", 1.6, -19.3, 0.8, planetas[2]),
+            new CorpoCeleste("Io", 0.17, "texturas/io_textura.jpg", 2.4, -0.8, 0, planetas[4]),
+            new CorpoCeleste("Europa", 0.165, "texturas/europa_textura.jpg", 3.2, -0.4, 0, planetas[4]),
+            new CorpoCeleste("Ganímedes", 0.2, "texturas/ganimedes_textura.jpg", 4, -0.2, 0, planetas[4]),
+            new CorpoCeleste("Calisto", 0.19, "texturas/calisto_textura.jpg", 4.8, -0.1, 0, planetas[4]),
+        ];
+
+        // Desenhar as trajetórias dos planetas
+        for(let i = 0; i < planetas.length; i++) { criarTrajetoria(planetas[i].raioTranslacao); }
+
+
+        // Função de animação
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Aplicar rotação e/ou translação em todos os corpos celestes
+            sol.rotacao();
+
+            for(let i = 0; i < 8; i++) {
+                planetas[i].rotacao();
+                planetas[i].translacao();
+            }
+
+            for(let i = 0; i< 5; i++) { satelitesNaturais[i].translacao(); }
+            
+            // Renderizar cena
+            renderer.render(scene, camera);
+        }
+
+        // Lidar com redimensionamento da janela
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);   
+        });
+
+        //Inicializar
+        criarSkybox();
+        atualizarInfo();
+
+        animate();
+    </script>
+</body>
+</html>

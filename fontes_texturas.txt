@@ -1,0 +1,47 @@
+Textura Sol:
+https://www.solarsystemscope.com/textures/download/2k_sun.jpg
+
+Textura Mercúrio:
+https://www.solarsystemscope.com/textures/download/2k_mercury.jpg
+
+Textura Vênus:
+https://www.solarsystemscope.com/textures/download/2k_venus_surface.jpg
+
+Textura Terra:
+https://t3.ftcdn.net/jpg/03/64/91/04/360_F_364910470_DCjyTv7AlFX0or7TGEcJWkz7JDLnCE5G.jpg
+
+Textura Marte:
+https://www.solarsystemscope.com/textures/download/2k_mars.jpg
+
+Textura Júpiter:
+https://www.solarsystemscope.com/textures/download/2k_jupiter.jpg
+
+Textura Saturno:
+https://www.solarsystemscope.com/textures/download/2k_saturn.jpg
+
+Textura dos anéis de Saturno:
+https://www.tylermw.com/wp-content/uploads/2021/11/small_ring_tex.png
+
+Textura Urano:
+https://www.solarsystemscope.com/textures/download/2k_uranus.jpg
+
+Textura Netuno:
+https://www.solarsystemscope.com/textures/download/2k_neptune.jpg
+
+Textura Lua:
+https://www.solarsystemscope.com/textures/download/2k_moon.jpg
+
+Textura Io:
+https://planet-texture-maps.fandom.com/wiki/Io
+
+Textura Europa:
+https://paulbourke.net/texturelibrary/displayimage.cgi?space/europa.jpg
+
+Textura Ganímedes:
+https://static.wikia.nocookie.net/planet-texture-maps/images/2/26/Dh_ganymede_texture.png/revision/latest?cb=20211212235403
+
+Textura Calisto:
+https://paulbourke.net/texturelibrary/displayimage.cgi?space/callisto.jpg
+
+Textura Skybox:
+https://github.com/dyrdadev/milky-way-skybox-for-unity/blob/main/Packages/dev.dyrda.milky-way-skybox/Runtime/Textures/eso0932a_mediumQuality.jpg
